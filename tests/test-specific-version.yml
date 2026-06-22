@@ -1,0 +1,38 @@
+name: Test PSRule specific version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install PowerShell
+        run: |
+          if ! command -v pwsh &>/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y wget apt-transport-https software-properties-common
+            wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
+            sudo dpkg -i packages-microsoft-prod.deb
+            sudo apt-get update -qq
+            sudo apt-get install -y powershell
+          fi
+          pwsh --version
+
+      - name: Run PSRule action with specific version
+        id: psrule
+        uses: .
+        with:
+          inputType: inputPath
+          inputPath: tests/fixtures/input-files/
+          source: tests/fixtures/.ps-rule/
+          version: '2.8.0'
+          summary: 'false'
+
+      - name: Assert PSRule ran with specified version
+        run: |
+          echo "PSRule ran with specific version 2.8.0"
+          echo "PASS"

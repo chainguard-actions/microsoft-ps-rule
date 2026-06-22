@@ -1,0 +1,37 @@
+name: Test PSRule inputPath scan
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install PowerShell
+        run: |
+          if ! command -v pwsh &>/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y wget apt-transport-https software-properties-common
+            wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
+            sudo dpkg -i packages-microsoft-prod.deb
+            sudo apt-get update -qq
+            sudo apt-get install -y powershell
+          fi
+          pwsh --version
+
+      - name: Run PSRule action (inputPath scan)
+        id: psrule
+        uses: .
+        with:
+          inputType: inputPath
+          inputPath: tests/fixtures/input-files/
+          source: tests/fixtures/.ps-rule/
+          summary: 'false'
+
+      - name: Assert action completed successfully
+        run: |
+          echo "PSRule inputPath action completed"
+          echo "PASS"
