@@ -1,0 +1,6 @@
+name: sample
+kind: Resource
+metadata:
+  name: test-resource
+spec:
+  value: hello
