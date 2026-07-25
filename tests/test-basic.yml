@@ -1,0 +1,37 @@
+name: Test basic usage - repository input type
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install PowerShell Core
+        run: |
+          if command -v pwsh &>/dev/null; then
+            echo "pwsh already available: $(pwsh --version)"
+          else
+            echo "Installing PowerShell Core..."
+            UBUNTU_VERSION=$(lsb_release -rs 2>/dev/null || echo "22.04")
+            wget -q "https://packages.microsoft.com/config/ubuntu/${UBUNTU_VERSION}/packages-microsoft-prod.deb" -O /tmp/packages-microsoft-prod.deb 2>/dev/null || \
+              wget -q "https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb" -O /tmp/packages-microsoft-prod.deb
+            sudo dpkg -i /tmp/packages-microsoft-prod.deb
+            sudo apt-get update -q
+            sudo apt-get install -y powershell
+            pwsh --version
+          fi
+
+      - name: Run PSRule with basic repository input
+        id: psrule
+        uses: .
+        with:
+          inputType: repository
+          inputPath: tests/fixtures/input/
+          source: tests/fixtures/ps-rule/
+          summary: 'false'
+
+      - name: Assert PSRule completed successfully
+        run: |
+          echo "PSRule action completed without error"
+          echo "PASS"
