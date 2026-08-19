@@ -1,0 +1,8 @@
+---
+# Sample YAML file for PSRule to validate
+name: sample
+kind: Resource
+metadata:
+  name: test-resource
+spec:
+  enabled: true

@@ -1,4 +1,4 @@
-name: Test basic usage - passing rules
+name: Test custom source path
 on:
   workflow_dispatch:
 jobs:
@@ -15,21 +15,21 @@ jobs:
           fi
           pwsh --version
 
-      - name: Set up PSRule source directory
+      - name: Set up custom rules directory
         run: |
-          mkdir -p "$GITHUB_WORKSPACE/.ps-rule"
-          cp "$GITHUB_WORKSPACE/tests/fixtures/ps-rule/passing.Rule.ps1" "$GITHUB_WORKSPACE/.ps-rule/"
+          mkdir -p "$GITHUB_WORKSPACE/my-rules"
+          cp "$GITHUB_WORKSPACE/tests/fixtures/ps-rule/passing.Rule.ps1" "$GITHUB_WORKSPACE/my-rules/"
           cp "$GITHUB_WORKSPACE/tests/fixtures/ps-rule/sample.yaml" "$GITHUB_WORKSPACE/"
 
       - id: action
-        name: Run PSRule with basic settings
+        name: Run PSRule with custom source path
         uses: .
         with:
           inputType: 'repository'
-          source: '.ps-rule/'
+          source: 'my-rules/'
           summary: 'false'
 
       - name: Assert action succeeded
         run: |
-          echo "PSRule action completed successfully"
+          echo "PSRule action with custom source completed successfully"
           echo "PASS"

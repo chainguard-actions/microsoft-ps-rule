@@ -92,7 +92,7 @@ runs:
       shell: pwsh
       working-directory: ${{ github.workspace }}
       env:
-        INPUT_ACTION_PATH: ${{ github.action_path }}
+        ACTION_PATH: ${{ github.action_path }}
         INPUT_INPUTTYPE: ${{ inputs.inputType }}
         INPUT_INPUTPATH: ${{ inputs.inputPath }}
         INPUT_MODULES: ${{ inputs.modules }}
@@ -109,4 +109,4 @@ runs:
         INPUT_SUMMARY: ${{ inputs.summary }}
         INPUT_VERSION: ${{ inputs.version }}
       run: |-
-        & "$env:INPUT_ACTION_PATH/powershell.ps1"
+        & "$env:ACTION_PATH/powershell.ps1" -InputType "$env:INPUT_INPUTTYPE" -InputPath "$env:INPUT_INPUTPATH" -Modules "$env:INPUT_MODULES" -Source "$env:INPUT_SOURCE" -Baseline "$env:INPUT_BASELINE" -Conventions "$env:INPUT_CONVENTIONS" -Option "$env:INPUT_OPTION" -Outcome "$env:INPUT_OUTCOME" -OutputFormat "$env:INPUT_OUTPUTFORMAT" -OutputPath "$env:INPUT_OUTPUTPATH" -Path "$env:INPUT_PATH" -PreRelease "$env:INPUT_PRERELEASE" -Repository "$env:INPUT_REPOSITORY" -Summary "$env:INPUT_SUMMARY" -Version "$env:INPUT_VERSION"

@@ -1,4 +1,4 @@
-name: Test basic usage - passing rules
+name: Test failing rules - action should fail
 on:
   workflow_dispatch:
 jobs:
@@ -15,21 +15,28 @@ jobs:
           fi
           pwsh --version
 
-      - name: Set up PSRule source directory
+      - name: Set up PSRule with failing rules
         run: |
           mkdir -p "$GITHUB_WORKSPACE/.ps-rule"
-          cp "$GITHUB_WORKSPACE/tests/fixtures/ps-rule/passing.Rule.ps1" "$GITHUB_WORKSPACE/.ps-rule/"
+          cp "$GITHUB_WORKSPACE/tests/fixtures/ps-rule-fail/failing.Rule.ps1" "$GITHUB_WORKSPACE/.ps-rule/"
           cp "$GITHUB_WORKSPACE/tests/fixtures/ps-rule/sample.yaml" "$GITHUB_WORKSPACE/"
 
       - id: action
-        name: Run PSRule with basic settings
+        name: Run PSRule with failing rules (expected to fail)
         uses: .
         with:
           inputType: 'repository'
           source: '.ps-rule/'
           summary: 'false'
+        continue-on-error: true
 
-      - name: Assert action succeeded
+      - name: Assert action failed as expected
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
         run: |
-          echo "PSRule action completed successfully"
-          echo "PASS"
+          echo "action outcome: $OUTCOME"
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: Expected action to fail when rules fail, but outcome was '$OUTCOME'"
+            exit 1
+          fi
+          echo "PASS: Action correctly failed when rules failed"

@@ -1,4 +1,4 @@
-name: Test output format - JSON
+name: Test NUnit3 output format
 on:
   workflow_dispatch:
 jobs:
@@ -18,32 +18,32 @@ jobs:
       - name: Set up PSRule source and input
         run: |
           mkdir -p "$GITHUB_WORKSPACE/.ps-rule"
-          cp "$GITHUB_WORKSPACE/tests/fixtures/ps-rule-output/output.Rule.ps1" "$GITHUB_WORKSPACE/.ps-rule/"
+          cp "$GITHUB_WORKSPACE/tests/fixtures/ps-rule/passing.Rule.ps1" "$GITHUB_WORKSPACE/.ps-rule/"
           cp "$GITHUB_WORKSPACE/tests/fixtures/ps-rule/sample.yaml" "$GITHUB_WORKSPACE/"
           mkdir -p "$GITHUB_WORKSPACE/reports"
 
       - id: action
-        name: Run PSRule with JSON output
+        name: Run PSRule with NUnit3 output
         uses: .
         with:
           inputType: 'repository'
           source: '.ps-rule/'
-          outputFormat: 'Json'
-          outputPath: 'reports/results.json'
+          outputFormat: 'NUnit3'
+          outputPath: 'reports/results.xml'
           summary: 'false'
 
-      - name: Assert output file was created
+      - name: Assert NUnit3 output file was created
         run: |
-          OUTPUT_FILE="$GITHUB_WORKSPACE/reports/results.json"
+          OUTPUT_FILE="$GITHUB_WORKSPACE/reports/results.xml"
           echo "Checking for output file: $OUTPUT_FILE"
           if [ ! -f "$OUTPUT_FILE" ]; then
-            echo "FAIL: Expected output file not found at $OUTPUT_FILE"
+            echo "FAIL: Expected NUnit3 output file not found at $OUTPUT_FILE"
             exit 1
           fi
           echo "Output file exists"
-          if ! python3 -c "import json, sys; json.load(open('$OUTPUT_FILE'))" 2>/dev/null; then
-            echo "FAIL: Output file does not contain valid JSON"
+          if ! grep -q "<?xml" "$OUTPUT_FILE" && ! grep -q "<test-results" "$OUTPUT_FILE" && ! grep -q "<test-run" "$OUTPUT_FILE"; then
+            echo "FAIL: Output file does not appear to contain NUnit3 XML"
             cat "$OUTPUT_FILE"
             exit 1
           fi
-          echo "PASS: Output file contains valid JSON"
+          echo "PASS: NUnit3 output file created successfully"

@@ -1,4 +1,4 @@
-name: Test basic usage - passing rules
+name: Test inputPath input type
 on:
   workflow_dispatch:
 jobs:
@@ -15,21 +15,23 @@ jobs:
           fi
           pwsh --version
 
-      - name: Set up PSRule source directory
+      - name: Set up PSRule source and input files
         run: |
           mkdir -p "$GITHUB_WORKSPACE/.ps-rule"
           cp "$GITHUB_WORKSPACE/tests/fixtures/ps-rule/passing.Rule.ps1" "$GITHUB_WORKSPACE/.ps-rule/"
-          cp "$GITHUB_WORKSPACE/tests/fixtures/ps-rule/sample.yaml" "$GITHUB_WORKSPACE/"
+          mkdir -p "$GITHUB_WORKSPACE/input-files"
+          cp "$GITHUB_WORKSPACE/tests/fixtures/ps-rule/sample.yaml" "$GITHUB_WORKSPACE/input-files/"
 
       - id: action
-        name: Run PSRule with basic settings
+        name: Run PSRule with inputPath type
         uses: .
         with:
-          inputType: 'repository'
+          inputType: 'inputPath'
+          inputPath: 'input-files/'
           source: '.ps-rule/'
           summary: 'false'
 
       - name: Assert action succeeded
         run: |
-          echo "PSRule action completed successfully"
+          echo "PSRule action with inputPath type completed successfully"
           echo "PASS"
