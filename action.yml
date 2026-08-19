@@ -88,20 +88,20 @@ runs:
       shell: pwsh
       working-directory: ${{ github.workspace }}
       env:
-        ACTION_PATH: ${{ github.action_path }}
-        INPUT_INPUT_TYPE: ${{ inputs.inputType }}
-        INPUT_INPUT_PATH: ${{ inputs.inputPath }}
+        INPUT_INPUTTYPE: ${{ inputs.inputType }}
+        INPUT_INPUTPATH: ${{ inputs.inputPath }}
         INPUT_MODULES: ${{ inputs.modules }}
         INPUT_SOURCE: ${{ inputs.source }}
         INPUT_BASELINE: ${{ inputs.baseline }}
         INPUT_CONVENTIONS: ${{ inputs.conventions }}
         INPUT_OPTION: ${{ inputs.option }}
         INPUT_OUTCOME: ${{ inputs.outcome }}
-        INPUT_OUTPUT_FORMAT: ${{ inputs.outputFormat }}
-        INPUT_OUTPUT_PATH: ${{ inputs.outputPath }}
+        INPUT_OUTPUTFORMAT: ${{ inputs.outputFormat }}
+        INPUT_OUTPUTPATH: ${{ inputs.outputPath }}
         INPUT_PATH: ${{ inputs.path }}
         INPUT_PRERELEASE: ${{ inputs.prerelease }}
         INPUT_REPOSITORY: ${{ inputs.repository }}
         INPUT_VERSION: ${{ inputs.version }}
+        PSRULE_ACTION_PATH: ${{ github.action_path }}
       run: |-
-        & "$env:ACTION_PATH/powershell.ps1" -InputType $env:INPUT_INPUT_TYPE -InputPath $env:INPUT_INPUT_PATH -Modules $env:INPUT_MODULES -Source $env:INPUT_SOURCE -Baseline $env:INPUT_BASELINE -Conventions $env:INPUT_CONVENTIONS -Option $env:INPUT_OPTION -Outcome $env:INPUT_OUTCOME -OutputFormat $env:INPUT_OUTPUT_FORMAT -OutputPath $env:INPUT_OUTPUT_PATH -Path $env:INPUT_PATH -PreRelease $env:INPUT_PRERELEASE -Repository $env:INPUT_REPOSITORY -Version $env:INPUT_VERSION
+        & "$Env:PSRULE_ACTION_PATH/powershell.ps1"

@@ -1,4 +1,4 @@
-name: Test PSRule output format
+name: Test PSRule NUnit3 output format
 on:
   workflow_dispatch:
 jobs:
@@ -23,31 +23,31 @@ jobs:
       - name: Create output directory
         run: mkdir -p "$GITHUB_WORKSPACE/reports"
 
-      - name: Run PSRule action with JSON output
+      - name: Run PSRule action with NUnit3 output
         id: psrule
         uses: .
         with:
           inputType: repository
           source: tests/fixtures/.ps-rule-basic/
           inputPath: tests/fixtures/src/
-          outputFormat: Json
-          outputPath: reports/psrule-results.json
+          outputFormat: NUnit3
+          outputPath: reports/psrule-results.xml
           version: '2.6.0'
 
-      - name: Assert output file was created
+      - name: Assert NUnit3 output file was created
         run: |
-          OUTPUT_FILE="$GITHUB_WORKSPACE/reports/psrule-results.json"
-          echo "Checking for output file: $OUTPUT_FILE"
+          OUTPUT_FILE="$GITHUB_WORKSPACE/reports/psrule-results.xml"
+          echo "Checking for NUnit3 output file: $OUTPUT_FILE"
           if [ ! -f "$OUTPUT_FILE" ]; then
-            echo "FAIL: Expected output file not found at $OUTPUT_FILE"
+            echo "FAIL: Expected NUnit3 output file not found at $OUTPUT_FILE"
             exit 1
           fi
-          echo "Output file exists"
-          # Verify it contains valid JSON content
+          echo "NUnit3 output file exists"
           CONTENT=$(cat "$OUTPUT_FILE")
-          echo "Content: $CONTENT"
-          if [ -z "$CONTENT" ]; then
-            echo "FAIL: Output file is empty"
+          echo "Content preview: ${CONTENT:0:200}"
+          # Verify it contains XML content
+          if ! echo "$CONTENT" | grep -q "<?xml\|<test-results\|<test-run"; then
+            echo "FAIL: Output file does not appear to contain NUnit3 XML"
             exit 1
           fi
-          echo "PASS: Output file created with content"
+          echo "PASS: NUnit3 output file created with XML content"

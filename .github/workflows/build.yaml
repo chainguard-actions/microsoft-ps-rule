@@ -1,0 +1,77 @@
+# CI workflow for validating action
+name: Build
+on:
+  push:
+    branches: [ main, 'release/*' ]
+  pull_request:
+    branches: [ main, 'release/*' ]
+
+jobs:
+
+  test:
+    name: 'Tests'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
+
+    - name: Register repository
+      shell: pwsh
+      run: |-
+        $Null = New-Item -Path out/repo -Type Directory -Force;
+
+        Invoke-WebRequest -Uri 'https://www.powershellgallery.com/api/v2/package/PSRule/1.11.1' -OutFile out/repo/PSRule.1.11.1.nupkg;
+        Invoke-WebRequest -Uri 'https://www.powershellgallery.com/api/v2/package/PSRule.Rules.MSFT.OSS/1.0.1' -OutFile out/repo/PSRule.Rules.MSFT.OSS.1.0.1.nupkg;
+        Save-Module -Name PSRule.Rules.MSFT.OSS -Repository PSGallery -Path out/repo/;
+        Register-PSRepository -SourceLocation out/repo -Name Local -InstallationPolicy Trusted;
+
+    - name: Run PSRule v1
+      uses: ./
+      with:
+        inputType: repository
+        modules: PSRule.Rules.MSFT.OSS
+        repository: Local
+        version: '1.11.1'
+
+    - name: Run PSRule v2
+      uses: ./
+      with:
+        inputType: repository
+        modules: PSRule.Rules.MSFT.OSS
+        outcome: Problem
+
+    - name: Unregister repository
+      shell: pwsh
+      if: always()
+      run: |-
+        Unregister-PSRepository -Name Local -ErrorAction Ignore;
+
+  run:
+    name: Analyze repository
+    runs-on: ubuntu-latest
+    needs: 'test'
+    permissions:
+      contents: read
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
+
+    - name: Run PSRule self analysis
+      uses: ./
+      with:
+        inputType: repository
+        outputFormat: Markdown
+        outputPath: reports/report.md
+        modules: PSRule.Rules.MSFT.OSS
+        prerelease: true
+
+    - name: PSRule results
+      uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
+      if: always()
+      with:
+        name: PSRule-results
+        path: reports/report.md

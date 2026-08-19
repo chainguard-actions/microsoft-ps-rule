@@ -1,0 +1,6 @@
+#
+# PSRule options for testing
+#
+output:
+  culture:
+    - en-US
