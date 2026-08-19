@@ -1,0 +1,71 @@
+name: Test JSON output format
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Install PowerShell if not available
+      - name: Ensure PowerShell is available
+        run: |
+          if ! command -v pwsh &>/dev/null; then
+            echo "Installing PowerShell..."
+            apt-get update -qq
+            apt-get install -y -qq powershell
+          else
+            echo "PowerShell already available: $(pwsh --version)"
+          fi
+
+      # Pre-install PSRule to avoid network issues during action run
+      - name: Pre-install PSRule
+        shell: pwsh
+        run: |
+          $installed = Get-InstalledModule -Name PSRule -RequiredVersion '2.9.0' -ErrorAction Ignore
+          if ($null -eq $installed) {
+            Write-Host "Installing PSRule 2.9.0..."
+            Install-Module -Repository PSGallery -Name PSRule -RequiredVersion '2.9.0' -Scope CurrentUser -Force
+          } else {
+            Write-Host "PSRule 2.9.0 already installed."
+          }
+
+      # Create a .ps-rule directory with a simple always-passing rule
+      - name: Setup PSRule rules and input files
+        run: |
+          mkdir -p .ps-rule
+          cat > .ps-rule/test-rules.Rule.ps1 << 'EOF'
+          Rule 'Test.AlwaysPass' {
+              $Assert.Pass();
+          }
+          EOF
+          mkdir -p test-input
+          cat > test-input/sample.yaml << 'YAML'
+          name: sample
+          kind: Test
+          YAML
+          mkdir -p reports
+
+      - id: action
+        uses: .
+        with:
+          inputType: inputPath
+          inputPath: test-input/
+          source: .ps-rule/
+          outputFormat: Json
+          outputPath: reports/results.json
+          summary: 'false'
+
+      - name: Assert output file was created
+        run: |
+          echo "Checking for output file..."
+          if [ ! -f "reports/results.json" ]; then
+            echo "FAIL: expected output file 'reports/results.json' was not created"
+            exit 1
+          fi
+          echo "Output file exists"
+          cat reports/results.json
+          echo "PASS"

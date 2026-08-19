@@ -1,0 +1,7 @@
+---
+# Sample YAML file for PSRule inputPath testing
+kind: TestResource
+metadata:
+  name: sample-resource
+spec:
+  value: test
