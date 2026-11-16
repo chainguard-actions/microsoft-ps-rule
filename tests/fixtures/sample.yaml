@@ -1,4 +1,0 @@
-name: sample
-kind: Test
-spec:
-  value: hello

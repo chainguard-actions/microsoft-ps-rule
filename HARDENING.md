@@ -4,76 +4,23 @@
 
 > This file was generated automatically by the hardening agent.
 
-**Policy SHA:** `d636be7e43ef829af6e853da6b3c7566db9f72fe`
+**Policy SHA:** `374911c4be584df24e6da57af2d990570ef0f859`
 
 **Test Policy SHA:** `843adf9e4b8f85d0c08b27b9d0b09dd094b54702`
 
 **Harden Agent Version:** `2`
 
-Action **microsoft--ps-rule/v2.9.0** was hardened automatically. 19 finding(s) were identified and resolved across 1 iteration(s).
+Action **microsoft--ps-rule/v2.9.0** was hardened automatically. 17 finding(s) were identified and resolved across 1 iteration(s).
 
 ## Findings Fixed
 
 ### script-injection (severity: high)
 
-Sub-rule (a): The action.yml composite action's single `run:` step directly interpolates `${{ github.action_path }}` and all 15 `${{ inputs.* }}` expressions (inputType, inputPath, modules, source, baseline, conventions, option, outcome, outputFormat, outputPath, path, prerelease, repository, summary, version) inside a PowerShell shell command. These expressions are expanded by the YAML template engine before the shell processes the command, allowing an attacker-controlled input value to inject arbitrary PowerShell commands. Example offending line: `${{ github.action_path }}/powershell.ps1 -InputType '${{ inputs.inputType }}' ...`
+Rule (a) violated: GitHub Actions expressions are put straight into the pwsh run: script of the 'Analysis' step. The offending line is: `${{ github.action_path }}/powershell.ps1 -InputType '${{ inputs.inputType }}' -InputPath '${{ inputs.inputPath }}' -Modules '${{ inputs.modules }}' ... -Version '${{ inputs.version }}'`. The runner substitutes every inputs.* value and github.action_path into the script text before PowerShell parses it. A value containing a single quote ends the quoted string, so any following PowerShell code runs (e.g. `x'; Invoke-Expression ...; '`). The working-directory value (`${{ github.workspace }}`) is not part of the script. Fix: pass each input through an env: variable (e.g. INPUT_INPUTTYPE: ${{ inputs.inputType }}) and reference it as $env:INPUT_INPUTTYPE. Call the script as & "$env:GITHUB_ACTION_PATH/powershell.ps1".
 
 Locations:
 
-- `action.yml:76`
-
-### script-injection (severity: high)
-
-Sub-rule (a): The 'Get working branch' step in dependencies.yaml directly interpolates `${{ env.WORKING_BRANCH }}` inside a `run:` shell command: `git checkout -B ${{ env.WORKING_BRANCH }} --force`. Any ${{ }} expression in a run: block is a script-injection risk as it is expanded by the YAML template engine before the shell sees it.
-
-Locations:
-
-- `.github/workflows/dependencies.yaml:35`
-
-### script-injection (severity: high)
-
-Sub-rule (a): The 'Push release branch' step in release.yaml directly interpolates `${{ env.RELEASE_BRANCH }}` and `${{ env.LATEST_BRANCH }}` inside a `run:` PowerShell block. Critically, RELEASE_BRANCH is set from `inputs.major` (a workflow_dispatch user input), making this attacker-controllable: `$latest = '${{ env.RELEASE_BRANCH }}' -eq '${{ env.LATEST_BRANCH }}'; Update-Branch -Remote origin -Major ${{ env.RELEASE_BRANCH }} -Latest:$latest;`
-
-Locations:
-
-- `.github/workflows/release.yaml:57`
-
-### unpinned-uses (severity: high)
-
-Multiple workflow files reference third-party actions using mutable version tags instead of full 40-character commit SHA digests, making them vulnerable to supply-chain attacks if the tag is moved to a malicious commit.
-
-analyze.yaml:
-  - uses: actions/checkout@v3
-  - uses: microsoft/ps-rule@main
-  - uses: microsoft/DevSkim-Action@v1
-  - uses: github/codeql-action/upload-sarif@v2
-
-build.yaml:
-  - uses: actions/checkout@v3 (×2)
-  - uses: actions/upload-artifact@v3
-
-dependencies.yaml:
-  - uses: actions/checkout@v3
-
-release.yaml:
-  - uses: actions/checkout@v3
-
-stale.yaml:
-  - uses: actions/stale@v8
-
-Locations:
-
-- `.github/workflows/analyze.yaml:26`
-- `.github/workflows/analyze.yaml:30`
-- `.github/workflows/analyze.yaml:40`
-- `.github/workflows/analyze.yaml:44`
-- `.github/workflows/analyze.yaml:48`
-- `.github/workflows/build.yaml:14`
-- `.github/workflows/build.yaml:47`
-- `.github/workflows/build.yaml:63`
-- `.github/workflows/dependencies.yaml:27`
-- `.github/workflows/release.yaml:44`
-- `.github/workflows/stale.yaml:17`
+- `action.yml:93`
 
 ### static-inline-injection (severity: high)
 
@@ -195,27 +142,128 @@ Locations:
 
 - `action.yml:93`
 
+### prior-fix (severity: high)
+
+Carried forward from this version's previous harden, which fixed it; fix it again unless the code no longer has the problem. The previous harden changed action.yml without recording a finding for it, and this analysis reported nothing there. Re-apply its security changes unless the code no longer needs them. The previous patch:
+```diff
+diff --git a/action.yml b/action.yml
+index 9e50644..b764947 100644
+--- a/action.yml
++++ b/action.yml
+@@ -12,82 +12,100 @@ inputs:
+     description: 'Determines the type of input to use for PSRule.'
+     default: 'repository'
+     required: false
+-
+   inputPath:
+     description: 'The path PSRule will look for files to validate.'
+     default: ''
+     required: false
+-
+   modules:
+     description: 'A comma separated list of modules to use for analysis.'
+     default: ''
+     required: false
+-
+   source:
+     description: 'An path containing rules to use for analysis.'
+     default: '.ps-rule/'
+     required: false
+-
+   baseline:
+     description: 'The name of a PSRule baseline to use.'
+     default: ''
+     required: false
+-
+   conventions:
+     description: 'A comma separated list of conventions to use.'
+     default: ''
+     required: false
+-
+   option:
+     description: 'The path to an options file.'
+     default: ''
+     required: false
+-
+   outcome:
+     description: 'Filters output to include results with the specified outcome.'
+     default: ''
+     required: false
+-
+   outputFormat:
+     description: 'The format to use when writing results to disk. When set to None results are not written to disk.'
+     default: 'None'
+     required: false
+-
+   outputPath:
+     description: 'The file path to write results to.'
+     default: ''
+     required: false
+-
+   path:
+     description: 'The working directory PSRule is run from.'
+     default: ''
+     required: false
+-
+   prerelease:
+     description: 'Determine if a pre-release module version is installed.'
+     default: 'false'
+     required: false
+-
+   repository:
+     description: 'The name of the PowerShell repository where PSRule modules are installed from. By default this is the PowerShell Gallery.'
+     default: 'PSGallery'
+     required: false
+-
+   summary:
+     description: 'Determines if a job summary is written.'
+     default: 'true'
+     required: false
+-
+   version:
+     description: 'The specific version of PSRule to use.'
+     default: ''
+     required: false
+-
+ runs:
+   using: 'composite'
+   steps:
+     - name: 'Analysis'
+       shell: pwsh
+       working-directory: ${{ github.workspace }}
++      env:
++        INPUT_TYPE: ${{ inputs.inputType }}
++        INPUT_INPUT_PATH: ${{ inputs.inputPath }}
++        INPUT_MODULES: ${{ inputs.modules }}
++        INPUT_SOURCE: ${{ inputs.source }}
++        INPUT_BASELINE: ${{ inputs.baseline }}
++        INPUT_CONVENTIONS: ${{ inputs.conventions }}
++        INPUT_OPTION: ${{ inputs.option }}
++        INPUT_OUTCOME: ${{ inputs.outcome }}
++        INPUT_OUTPUT_FORMAT: ${{ inputs.outputFormat }}
++        INPUT_OUTPUT_PATH: ${{ inputs.outputPath }}
++        INPUT_PATH: ${{ inputs.path }}
++        INPUT_PRERELEASE: ${{ inputs.prerelease }}
++        INPUT_REPOSITORY: ${{ inputs.repository }}
++        INPUT_SUMMARY: ${{ inputs.summary }}
++        INPUT_VERSION: ${{ inputs.version }}
+       run: |-
+-        ${{ github.action_path }}/powershell.ps1 -InputType '${{ inputs.inputType }}' -InputPath '${{ inputs.inputPath }}' -Modules '${{ inputs.modules }}' -Source '${{ inputs.source }}' -Baseline '${{ inputs.baseline }}' -Conventions '${{ inputs.conventions }}' -Option '${{ inputs.option }}' -Outcome '${{ inputs.outcome }}' -OutputFormat '${{ inputs.outputFormat }}' -OutputPath '${{ inputs.outputPath }}' -Path '${{ inputs.path }}' -PreRelease '${{ inputs.prerelease }}' -Repository '${{ inputs.repository }}' -Summary '${{ inputs.summary }}' -Version '${{ inputs.version }}'
++        & "$env:GITHUB_ACTION_PATH/powershell.ps1" -InputType $env:INPUT_TYPE -InputPath $env:INPUT_INPUT_PATH -Modules $env:INPUT_MODULES -Source $env:INPUT_SOURCE -Baseline $env:INPUT_BASELINE -Conventions $env:INPUT_CONVENTIONS -Option $env:INPUT_OPTION -Outcome $env:INPUT_OUTCOME -OutputFormat $env:INPUT_OUTPUT_FORMAT -OutputPath $env:INPUT_OUTPUT_PATH -Path $env:INPUT_PATH -PreRelease $env:INPUT_PRERELEASE -Repository $env:INPUT_REPOSITORY -Summary $env:INPUT_SUMMARY -Version $env:INPUT_VERSION
+
+```
+
+Locations:
+
+- `action.yml`
+
 ## Iteration Notes
 
 ### Iteration 1
 
-**Fixes applied:** script-injection, static-inline-injection, unpinned-uses
+**Fixes applied:** script-injection, static-inline-injection, prior-fix
 
 **Notes:**
 
-Fixed all findings across 6 files:
-
-1. action.yml: Moved all 15 inputs.* expressions and github.action_path out of the run: block into an env: block. PowerShell command now uses $env:VAR_NAME references. github.action_path replaced with built-in $env:GITHUB_ACTION_PATH.
-
-2. .github/workflows/dependencies.yaml: Moved ${{ env.WORKING_BRANCH }} into step env: block as WORKING_BRANCH_NAME; pinned actions/checkout@v3 to SHA a37ce9120846195fa4ece8f58b268e6043cb2f26.
-
-3. .github/workflows/release.yaml: Moved ${{ env.RELEASE_BRANCH }} and ${{ env.LATEST_BRANCH }} into step env: block as STEP_RELEASE_BRANCH and STEP_LATEST_BRANCH; pinned actions/checkout@v3 to SHA.
-
-4. .github/workflows/analyze.yaml: Pinned actions/checkout@v3, microsoft/ps-rule@main, microsoft/DevSkim-Action@v1, and github/codeql-action/upload-sarif@v2 to full commit SHAs.
-
-5. .github/workflows/build.yaml: Pinned both actions/checkout@v3 references and actions/upload-artifact@v3 to full commit SHAs.
-
-6. .github/workflows/stale.yaml: Pinned actions/stale@v8 to full commit SHA.
-
-All original tag names preserved as inline comments for readability.
+I moved every inputs.* expression in the pwsh 'Analysis' step of action.yml into the step's env: block. Each one gets the INPUT_* name that powershell.ps1 already uses for its parameter defaults (e.g. INPUT_INPUTTYPE, INPUT_OUTPUTFORMAT). The script is now called as & "$env:GITHUB_ACTION_PATH/powershell.ps1" and each argument is passed as "$env:INPUT_X" in double quotes, so the script gets the same string values it got before. The ${{ github.workspace }} expression in working-directory is unchanged, since it is not part of the script. This re-applies the previous harden's fix, but with env names that line up with the script's own defaults. Nothing was run or tested.
 
