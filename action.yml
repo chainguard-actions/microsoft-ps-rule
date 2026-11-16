@@ -12,62 +12,77 @@ inputs:
     description: 'Determines the type of input to use for PSRule.'
     default: 'repository'
     required: false
+
   inputPath:
     description: 'The path PSRule will look for files to validate.'
     default: ''
     required: false
+
   modules:
     description: 'A comma separated list of modules to use for analysis.'
     default: ''
     required: false
+
   source:
     description: 'An path containing rules to use for analysis.'
     default: '.ps-rule/'
     required: false
+
   baseline:
     description: 'The name of a PSRule baseline to use.'
     default: ''
     required: false
+
   conventions:
     description: 'A comma separated list of conventions to use.'
     default: ''
     required: false
+
   option:
     description: 'The path to an options file.'
     default: ''
     required: false
+
   outcome:
     description: 'Filters output to include results with the specified outcome.'
     default: ''
     required: false
+
   outputFormat:
     description: 'The format to use when writing results to disk. When set to None results are not written to disk.'
     default: 'None'
     required: false
+
   outputPath:
     description: 'The file path to write results to.'
     default: ''
     required: false
+
   path:
     description: 'The working directory PSRule is run from.'
     default: ''
     required: false
+
   prerelease:
     description: 'Determine if a pre-release module version is installed.'
     default: 'false'
     required: false
+
   repository:
     description: 'The name of the PowerShell repository where PSRule modules are installed from. By default this is the PowerShell Gallery.'
     default: 'PSGallery'
     required: false
+
   summary:
     description: 'Determines if a job summary is written.'
     default: 'true'
     required: false
+
   version:
     description: 'The specific version of PSRule to use.'
     default: ''
     required: false
+
 runs:
   using: 'composite'
   steps:
